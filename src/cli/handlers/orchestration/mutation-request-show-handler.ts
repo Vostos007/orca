@@ -2,7 +2,10 @@ import type { CommandHandler } from '../../dispatch'
 import { printResult } from '../../format'
 import { getRequiredStringFlag } from '../../flags'
 import { RuntimeClientError } from '../../runtime-client'
-import type { OrchestrationMutationRequestShowResult } from '../../../shared/orchestration-mutation-request'
+import {
+  describeMutationRequestState,
+  type OrchestrationMutationRequestShowResult
+} from '../../../shared/orchestration-mutation-request'
 
 export const ORCHESTRATION_REQUEST_SHOW_HANDLER: Record<string, CommandHandler> = {
   'orchestration request-show': async ({ flags, client, json }) => {
@@ -24,7 +27,7 @@ export const ORCHESTRATION_REQUEST_SHOW_HANDLER: Record<string, CommandHandler> 
       result,
       json,
       (value) =>
-        `${value.requestId} [${value.state}]${value.method ? ` ${value.method}` : ''}\n${value.interpretation}`
+        `${value.requestId} [${value.method === 'terminal.send' ? 'RPC ' : ''}${value.state}]${value.method ? ` ${value.method}` : ''}\n${value.method === 'terminal.send' ? describeMutationRequestState(value) : value.interpretation}`
     )
   }
 }

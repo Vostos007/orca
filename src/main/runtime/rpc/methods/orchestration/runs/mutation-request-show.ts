@@ -1,3 +1,4 @@
+import { projectTerminalPromptMutation } from '../../../../../../shared/terminal-prompt-mutation-observation'
 import {
   describeMutationRequestState,
   type OrchestrationMutationRequestShowResult
@@ -32,17 +33,26 @@ export const ORCHESTRATION_MUTATION_REQUEST_METHODS = [
           })
         }
       }
+      const receipt = row.receipt ? parseReceipt(row.receipt) : undefined
+      const terminalPrompt = projectTerminalPromptMutation({
+        requestId: params.request,
+        state: row.state,
+        method: row.method,
+        receipt
+      })
       return {
         requestId: params.request,
         state: row.state,
         method: row.method,
         createdAt: row.created_at,
         updatedAt: row.updated_at,
-        ...(row.receipt ? { receipt: parseReceipt(row.receipt) } : {}),
+        ...(row.receipt ? { receipt } : {}),
+        ...(terminalPrompt ? { terminalPrompt } : {}),
         interpretation: describeMutationRequestState({
           requestId: params.request,
           state: row.state,
-          method: row.method
+          method: row.method,
+          receipt
         })
       }
     }
