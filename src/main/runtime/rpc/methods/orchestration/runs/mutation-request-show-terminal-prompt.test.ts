@@ -30,7 +30,7 @@ function show(
   const getMutationReceipt = vi.fn(() => row)
   const db = { getMutationReceipt }
   const runtime = { getOrchestrationDb: () => db }
-  // SAFETY: this read-only handler uses only getOrchestrationDb/getMutationReceipt; the paired caller identity is explicit.
+  // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: this read-only handler uses only getOrchestrationDb/getMutationReceipt; the paired caller identity is explicit.
   const result = method.handler({ request: 'request_1' }, {
     runtime,
     authenticatedCallerFingerprint: fingerprint

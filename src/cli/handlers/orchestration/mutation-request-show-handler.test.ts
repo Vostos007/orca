@@ -19,7 +19,7 @@ const call = vi.fn()
 const handler = ORCHESTRATION_REQUEST_SHOW_HANDLER['orchestration request-show']
 
 async function run(json = false): Promise<void> {
-  // SAFETY: the handler only uses this mocked client's call method.
+  // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: the handler only uses this mocked client's call method.
   await handler({
     flags: new Map([['request', 'request_1']]),
     client: { call },
