@@ -15,6 +15,7 @@ import type { DescendantTreeVerdict } from '../pty-descendant-exit-verification'
 import { providerSpawnAbsence, type ProviderSpawnAbsence } from './provider-executable-missing'
 import { supervisedProviderSpawnFailure } from './provider-spawn-failure-report'
 import { guardSupervisedProviderGroup } from './provider-group-orphan-guard'
+import { beginProviderReservationObservation } from './provider-reservation-observer'
 import {
   acceptProviderWriterClose,
   closeProviderProcess,
@@ -94,6 +95,7 @@ export function spawnManagedProviderProcess(
       `Supervised provider graceful exit must wait at least ${PROVIDER_SUPERVISOR_MAX_STOP_MS} ms; received ${policy.gracefulExitMs} ms`
     )
   }
+  const reservation = beginProviderReservationObservation(launch.reservationObservation)
   const child = (options.spawnImpl ?? spawnProcess)({
     program: spec.program,
     args: spec.args,
@@ -102,6 +104,15 @@ export function spawnManagedProviderProcess(
     detached: spec.detached,
     stdio: ['pipe', 'pipe', 'pipe', ...spec.groupReportStdio]
   })
+  if (child.pid !== undefined) {
+    reservation?.spawned(child.pid)
+  } else if (reservation) {
+    child.once('spawn', () => {
+      if (child.pid !== undefined) {
+        reservation.spawned(child.pid)
+      }
+    })
+  }
   guardSupervisedProviderGroup(child, { site: options.site, supervised: spec.supervised })
   const listeners = new Set<(exit: ProviderProcessExit) => void>()
   let observed: ProviderProcessExit | null = null
@@ -146,6 +157,10 @@ export function spawnManagedProviderProcess(
       return
     }
     observed = exit
+    // An abnormal supervisor exit can leave its detached provider group alive.
+    if (exit.processless || !spec.supervised || (exit.code === 0 && exit.signal === null)) {
+      reservation?.exited(exit.processless)
+    }
     resolveExit()
     for (const listener of listeners) {
       listener(exit)

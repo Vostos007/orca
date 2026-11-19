@@ -37,6 +37,7 @@ import type { CodexStructuredSessionTeardown } from './codex-structured-session-
 import type { CodexStructuredNotificationRetry } from './codex-structured-notification-retry'
 import type { deliverCodexServerRequest } from './codex-structured-provider-events'
 import { codexAcquisitionNotificationHandler } from './codex-structured-acquisition-notification'
+import { prepareProviderReservationObservation } from '../provider-process/provider-reservation-observer'
 
 export async function acquireCodexStructuredSession(input: {
   input: StructuredAgentSessionAcquireInput
@@ -122,6 +123,10 @@ export async function acquireCodexStructuredSession(input: {
             ...launchSettings,
             ...(acquireInput.options.model ? { model: acquireInput.options.model } : {})
           }
+    const reservationObservation = await prepareProviderReservationObservation(
+      launch.cwd,
+      acquireInput.spawnToken
+    )
     acquisitions.assertCurrent(sessionId, attempt)
     account = launch.codexHome ? deps.resolveAccountKind?.(launch.codexHome) : undefined
     const connection = await open(
@@ -129,6 +134,7 @@ export async function acquireCodexStructuredSession(input: {
         command: launch.command,
         args: launch.args,
         cwd: launch.cwd,
+        ...(reservationObservation ? { reservationObservation } : {}),
         ...(launch.env ? { env: launch.env } : {}),
         ...(launch.envToDelete ? { envToDelete: launch.envToDelete } : {})
       },

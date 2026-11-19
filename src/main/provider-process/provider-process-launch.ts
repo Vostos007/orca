@@ -7,6 +7,8 @@ export type ProviderProcessLaunch = {
   env?: Record<string, string>
   /** Keys stripped after the overlay. */
   envToDelete?: readonly string[]
+  /** Host-minted metadata for observing a persistent session, never a discovery probe. */
+  reservationObservation?: { spawnToken: string; projectId: string }
 }
 
 export function resolveProviderChildEnv(
