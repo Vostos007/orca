@@ -120,6 +120,25 @@ Affected tests use Vitest's static import graph. Run suites explicitly for compu
 dynamic imports, fixture files, subprocess inputs, or other dependencies outside that
 graph. Local affected tests do not replace CI.
 
+If Vitest stops making progress in a Linux terminal, check its job state before
+assuming a test is stuck. Run `ps -eo pid,ppid,pgid,tpgid,tty,stat,comm` on the
+test host. `T` means the process is stopped. On a TTY, a different `PGID` and
+`TPGID` means the job is not in the foreground. This is consistent with terminal
+job control (for example, `SIGTTIN` or `SIGTTOU`), but does not identify the
+signal that stopped it.
+
+On HW-work, the same four runtime-continuity test files passed twice over SSH
+without a TTY and once in the foreground of a fresh SSH terminal (16 tests per
+run). Use `ssh -T` for unattended runs. If you need a TTY, keep the test job in
+the foreground and use `timeout --foreground` if wrapping it with GNU `timeout`.
+Keep `ORCA_BACKGROUND_LAUNCH=1` for app windows; it does not put the shell job
+in the background.
+
+The Node.js SQLite `ExperimentalWarning` also appeared in successful runs.
+`NODE_OPTIONS=--trace-warnings` traced it to loading `node:sqlite`, and the
+traced run showed no database lock, open, or I/O errors. The warning alone is
+not evidence of a database hang.
+
 To reduce main-process rebuild CPU and memory when you do not need its source maps,
 set `ORCA_DEV_MAIN_SOURCEMAPS=0` before `pnpm dev`. In Bash/zsh:
 
